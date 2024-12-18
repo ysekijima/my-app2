@@ -1,0 +1,24 @@
+p style="color: green" = notice
+
+h1 Humen
+.container
+  section
+    = form_with(url: humen_path, method: :get, local: true) do |form|
+      .form-group
+        = form.label :q, "Search by name:"
+        = form.text_field :q, value: params[:q], class: 'form-control'
+        = form.submit 'Search', class: 'btn btn-primary'
+  section
+    = link_to "New human", new_human_path, class: 'btn btn-outline-info'
+    #humen
+      table.table.w-75.mx-auto.align-middle
+        thead
+          tr
+            th scope="col" Number
+            th scope="col" Name
+            th scope="col" Size
+            th scope="col" Memo
+            th scope="col"
+        tbody
+          - @humen.each do |human|
+            == render human

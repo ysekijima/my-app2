@@ -1,0 +1,11 @@
+tr id="#{dom_id animal}"
+  th scope="row"
+    =< animal.number
+  td
+    =< animal.name
+  td
+    =< animal.size
+  td
+    =< animal.memo
+  td
+    = link_to "Show this animal", animal, class: 'btn btn-info text-white'

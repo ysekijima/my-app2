@@ -1,0 +1,11 @@
+tr id="#{dom_id human}"
+  th scope="row"
+    =< human.number
+  td
+    =< human.name
+  td
+    =< human.size
+  td
+    =< human.memo
+  td
+    = link_to "Show this human", human, class: 'btn btn-info text-white'
