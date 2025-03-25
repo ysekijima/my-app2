@@ -67,4 +67,48 @@ Rails.application.configure do
 
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
+
+  # 既存のログフォーマッターを使用
+  config.log_formatter = ::Logger::Formatter.new
+
+  # ログに controller と action を追加
+  class CustomLogFormatter < Logger::Formatter
+    def call(severity, timestamp, progname, msg)
+      request_info = Thread.current[:log_request_info] || {}
+      controller_action = request_info[:controller] && request_info[:action] ? "[#{request_info[:controller]}##{request_info[:action]}]" : ""
+      "#{timestamp.iso8601} [#{severity}] #{controller_action} #{msg}\n"
+    end
+  end
+
+  config.logger = ActiveSupport::Logger.new(STDOUT)
+  config.logger.formatter = CustomLogFormatter.new
+
+  # リクエストごとに controller, action を記録
+  ActiveSupport::Notifications.subscribe("start_processing.action_controller") do |*args|
+    event = ActiveSupport::Notifications::Event.new(*args)
+    payload = event.payload
+    Thread.current[:log_request_info] = {
+      controller: payload[:controller],
+      action: payload[:action]
+    }
+  end
+
+  # `process_action.action_controller` では情報をクリアしない
+  # リクエスト終了後にクリアする
+  config.middleware.insert_after ActionDispatch::Executor, Middleware::ClearLogRequestInfo if defined?(Middleware::ClearLogRequestInfo)
+end
+
+# ミドルウェアを定義（リクエスト終了後にクリア）
+module Middleware
+  class ClearLogRequestInfo
+    def initialize(app)
+      @app = app
+    end
+
+    def call(env)
+      @app.call(env)
+    ensure
+      Thread.current[:log_request_info] = nil
+    end
+  end
 end
