@@ -80,8 +80,22 @@ Rails.application.configure do
     end
   end
 
-  config.logger = ActiveSupport::Logger.new(STDOUT)
-  config.logger.formatter = CustomLogFormatter.new
+  # ログファイルへの出力設定
+  log_file = File.open(Rails.root.join("log", "#{Rails.env}.log"), "a")
+  log_file.sync = true
+  file_logger = ActiveSupport::Logger.new(log_file)
+  file_logger.formatter = CustomLogFormatter.new
+
+  # STDOUT への出力設定
+  stdout_logger = ActiveSupport::Logger.new(STDOUT)
+  stdout_logger.formatter = CustomLogFormatter.new
+
+  # 両方に出力するロガーを作成
+  combined_logger = ActiveSupport::Logger.new(STDOUT)
+  combined_logger.extend(ActiveSupport::Logger.broadcast(file_logger))
+  combined_logger.formatter = CustomLogFormatter.new
+
+  config.logger = combined_logger
 
   # リクエストごとに controller, action を記録
   ActiveSupport::Notifications.subscribe("start_processing.action_controller") do |*args|
