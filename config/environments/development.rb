@@ -90,12 +90,14 @@ Rails.application.configure do
   stdout_logger = ActiveSupport::Logger.new(STDOUT)
   stdout_logger.formatter = CustomLogFormatter.new
 
-  # 両方に出力するロガーを作成
-  combined_logger = ActiveSupport::Logger.new(STDOUT)
-  combined_logger.extend(ActiveSupport::Logger.broadcast(file_logger))
-  combined_logger.formatter = CustomLogFormatter.new
+  # BroadcastLogger を使って両方に出力
+  broadcast_logger = ActiveSupport::BroadcastLogger.new(stdout_logger)
+  broadcast_logger.broadcast_to(file_logger)
+  broadcast_logger.level = Logger::DEBUG
+  broadcast_logger.formatter = CustomLogFormatter.new
 
-  config.logger = combined_logger
+  # Rails に設定
+  config.logger = broadcast_logger
 
   # リクエストごとに controller, action を記録
   ActiveSupport::Notifications.subscribe("start_processing.action_controller") do |*args|
